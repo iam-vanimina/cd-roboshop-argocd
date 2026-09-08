@@ -40,4 +40,20 @@ It can take a couple of minutes for all the microservices to pull their images a
   `kubectl get pods -n argocd`
 
   Ensure all pods (such as argocd-server, argocd-repo-server, and argocd-application-controller) show a status of Running
+
+  <img width="579" height="122" alt="image" src="https://github.com/user-attachments/assets/c1ceb0d7-d46b-4281-b893-bd7fbd42ae26" />
+
+
+  By default, the Argo CD API server is not exposed with a public IP address. For local development or quick testing, the easiest access method is via Port Forwarding
+
+`kubectl port-forward svc/argocd-server -n argocd 8080:443`
+
+The default username is admin. The initial password is automatically generated and safely stored inside a Kubernetes secret. Decrypt it using the following command:
+
+`kubectl -n argocd get secret argocd-initial-admin-secret \
+  -o jsonpath="{.data.password}" | base64 -d`
+
+  Note: It is highly recommended to change this temporary password immediately after logging in for the first time.
+  
+
   
