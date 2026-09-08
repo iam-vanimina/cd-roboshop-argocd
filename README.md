@@ -102,7 +102,7 @@ click on login tab and verify order history
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-I hope it helpful to learning microservices and database how they are working in a flow. 
+I hope it will helpful to learning microservices and database how they are working in a flow. 
 
 
 
