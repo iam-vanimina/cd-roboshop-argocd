@@ -1,5 +1,5 @@
 
-roboshop argocd applications deployment as below 
+roboshop argocd microservice applications deployment as below 
 ------------------------------------------------
 
 <img width="944" height="469" alt="image" src="https://github.com/user-attachments/assets/7d7f5603-3dca-4fbc-a262-4d4d842cea92" />
