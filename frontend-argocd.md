@@ -563,3 +563,266 @@ These are Kubernetes-generated runtime metadata.
 Keep the Git manifest declarative and let Kubernetes generate runtime metadata automatically.
 ---------------------------------------------------------------------------------------------------------------------------
 
+## 🚀 Frontend Kubernetes Deployment
+
+The RoboShop frontend is deployed as a Kubernetes `Deployment` with **1 replica**, using a rolling-update strategy. NGINX configuration is injected from the `frontend` ConfigMap.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: frontend
+  namespace: roboshop
+
+  labels:
+    app: frontend
+    project: roboshop
+    tier: web
+
+  annotations:
+    argocd.argoproj.io/tracking-id: frontend:apps/Deployment:roboshop/frontend
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: frontend
+      project: roboshop
+      tier: web
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+
+  template:
+    metadata:
+      labels:
+        app: frontend
+        project: roboshop
+        tier: web
+
+    spec:
+      containers:
+        - name: frontend
+          image: vanimina/frontend:1.0.0
+          imagePullPolicy: Always
+
+          volumeMounts:
+            - name: nginx-conf
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+              readOnly: true
+
+      volumes:
+        - name: nginx-conf
+          configMap:
+            name: frontend
+            items:
+              - key: nginx.conf
+                path: nginx.conf
+            defaultMode: 420
+
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+```
+
+## 🏗️ Deployment Architecture
+
+```text
+                         🔴 Argo CD
+                              │
+                              │ GitOps
+                              ▼
+                    ┌───────────────────┐
+                    │   Deployment      │
+                    │     frontend      │
+                    └─────────┬─────────┘
+                              │
+                              │ creates
+                              ▼
+                    ┌───────────────────┐
+                    │   Frontend Pod    │
+                    │                   │
+                    │  NGINX :8080      │
+                    │                   │
+                    │  Image            │
+                    │  vanimina/        │
+                    │  frontend:1.0.0   │
+                    └─────────┬─────────┘
+                              │
+                              │ mounts
+                              ▼
+                    ┌───────────────────┐
+                    │    ConfigMap      │
+                    │     frontend      │
+                    │                   │
+                    │    nginx.conf     │
+                    └───────────────────┘
+```
+
+## 📋 Deployment Configuration
+
+| Configuration        | Value                     |
+| -------------------- | ------------------------- |
+| 📦 Resource          | `Deployment`              |
+| 🏷️ Name             | `frontend`                |
+| 📁 Namespace         | `roboshop`                |
+| 🏷️ Project          | `roboshop`                |
+| 🎯 Tier              | `web`                     |
+| 🔢 Replicas          | `1`                       |
+| 🐳 Image             | `vanimina/frontend:1.0.0` |
+| 🔄 Image Pull Policy | `Always`                  |
+| 🚀 Strategy          | `RollingUpdate`           |
+| 📈 Max Surge         | `25%`                     |
+| 📉 Max Unavailable   | `25%`                     |
+| ⚙️ Config            | `frontend` ConfigMap      |
+| 🌐 NGINX Config      | `/etc/nginx/nginx.conf`   |
+| 🔴 GitOps            | Argo CD                   |
+
+## 🔄 Rolling Update Strategy
+
+The Deployment uses Kubernetes `RollingUpdate`:
+
+```yaml
+strategy:
+  type: RollingUpdate
+
+  rollingUpdate:
+    maxSurge: 25%
+    maxUnavailable: 25%
+```
+
+This allows Kubernetes to gradually replace old frontend Pods with new Pods during an image update.
+
+For example:
+
+```text
+Old Version
+    │
+    ▼
+frontend:1.0.0
+    │
+    │ Update image
+    ▼
+┌─────────────────┐
+│ Rolling Update  │
+└────────┬────────┘
+         │
+         ▼
+New Frontend Pod
+    │
+    ▼
+New Version
+```
+
+## 📁 NGINX ConfigMap Mount
+
+The `nginx.conf` file is provided by the `frontend` ConfigMap and mounted into the container:
+
+```yaml
+volumeMounts:
+  - name: nginx-conf
+    mountPath: /etc/nginx/nginx.conf
+    subPath: nginx.conf
+    readOnly: true
+```
+
+The corresponding volume is:
+
+```yaml
+volumes:
+  - name: nginx-conf
+    configMap:
+      name: frontend
+```
+
+Therefore:
+
+```text
+ConfigMap
+   │
+   │ nginx.conf
+   ▼
+Volume
+   │
+   ▼
+/etc/nginx/nginx.conf
+   │
+   ▼
+NGINX
+```
+
+## 🔴 Argo CD Integration
+
+Argo CD tracks this Deployment using:
+
+```yaml
+annotations:
+  argocd.argoproj.io/tracking-id: frontend:apps/Deployment:roboshop/frontend
+```
+
+This keeps the Deployment synchronized with the desired configuration stored in Git.
+
+## 🔍 Useful Commands
+
+### Check Deployment
+
+```bash
+kubectl get deployment frontend -n roboshop
+```
+
+### Check Pods
+
+```bash
+kubectl get pods -n roboshop -l app=frontend
+```
+
+### Check Deployment Details
+
+```bash
+kubectl describe deployment frontend -n roboshop
+```
+
+### Check NGINX Logs
+
+```bash
+kubectl logs -n roboshop -l app=frontend
+```
+
+### Verify NGINX Configuration
+
+```bash
+kubectl exec -n roboshop deploy/frontend -- nginx -t
+```
+
+### Check Mounted Configuration
+
+```bash
+kubectl exec -n roboshop deploy/frontend -- cat /etc/nginx/nginx.conf
+```
+
+## ⚠️ GitOps Best Practice
+
+Do not commit the following fields from the live `kubectl` output:
+
+```yaml
+creationTimestamp:
+resourceVersion:
+uid:
+generation:
+status:
+```
+
+These are generated or maintained by Kubernetes.
+
+Your Git repository should contain the **desired state**, while Kubernetes maintains the **runtime state**.
+
+------------------------------------------------------------------------------------------------------------------------
+
+
+
+-------------------------------------------------------------------------------------------------------------------------
