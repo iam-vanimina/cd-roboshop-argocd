@@ -63,14 +63,195 @@ view the information of all services in roboshop namespace
 <img width="451" height="158" alt="image" src="https://github.com/user-attachments/assets/79ec2109-17e3-4f6a-9675-f8ecc9525986" />
 
 
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------
 
 
 
+-----------------------------------------------------------------------------------------------------------------------------
 
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+frontend-Argocd  view
 
+<img width="955" height="395" alt="image" src="https://github.com/user-attachments/assets/3b4d5b6d-96b5-46db-9ba5-557a785e23fe" />
 
+# 🚀 RoboShop — Frontend Argo CD Application
 
+[![Argo CD](https://img.shields.io/badge/Argo%20CD-GitOps-orange?logo=argo)](https://argo-cd.readthedocs.io/)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-Deployment-blue?logo=kubernetes)](https://kubernetes.io/)
+[![Helm](https://img.shields.io/badge/Helm-Chart-0F1689?logo=helm)](https://helm.sh/)
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-black?logo=github)](https://github.com/iam-vanimina/frontend-argocd)
 
+## 📦 Project
 
+**RoboShop Frontend** is deployed to Kubernetes using **Argo CD + Helm** following a GitOps approach.
+
+### 🔄 GitOps Flow
+
+```text
+👨‍💻 Developer
+      │
+      ▼
+🐙 GitHub Repository
+      │
+      │  frontend-argocd
+      ▼
+🔴 Argo CD
+      │
+      │  Helm
+      ▼
+☸️ Kubernetes Cluster
+      │
+      ▼
+🛍️ RoboShop Frontend
+```
+
+## ⚙️ Argo CD Application Configuration
+
+```yaml
+project: roboshop
+
+source:
+  repoURL: https://github.com/iam-vanimina/frontend-argocd.git
+  path: .
+  targetRevision: main
+
+  helm:
+    valueFiles:
+      - values.yaml
+    releaseName: frontend
+
+destination:
+  server: https://kubernetes.default.svc
+  namespace: roboshop
+
+syncPolicy:
+  automated:
+    prune: true
+    selfHeal: true
+
+  syncOptions:
+    - CreateNamespace=true
+    - ApplyOutOfSyncOnly=true
+    - ServerSideApply=true
+    - PruneLast=true
+```
+
+## 🔧 Configuration Details
+
+| Configuration       | Value             |
+| ------------------- | ----------------- |
+| 📌 Project          | `roboshop`        |
+| 🐙 Repository       | `frontend-argocd` |
+| 🌿 Branch           | `main`            |
+| 📁 Path             | `.`               |
+| ⛵ Deployment        | Helm              |
+| 📄 Values           | `values.yaml`     |
+| 🚀 Release Name     | `frontend`        |
+| ☸️ Namespace        | `roboshop`        |
+| 🔄 Auto Sync        | Enabled           |
+| 🧹 Auto Prune       | Enabled           |
+| ❤️ Self Heal        | Enabled           |
+| 📦 Create Namespace | Enabled           |
+| ⚡ Server Side Apply | Enabled           |
+
+## 🔄 Sync Policy
+
+### 🤖 Automated Sync
+
+Argo CD automatically synchronizes the Kubernetes resources whenever the Git repository changes.
+
+```yaml
+automated:
+  prune: true
+  selfHeal: true
+```
+
+### 🧹 Prune
+
+```yaml
+prune: true
+```
+
+Removes Kubernetes resources that no longer exist in Git.
+
+### ❤️ Self Heal
+
+```yaml
+selfHeal: true
+```
+
+Automatically restores resources when they are manually changed in the Kubernetes cluster.
+
+### 📦 Create Namespace
+
+```yaml
+- CreateNamespace=true
+```
+
+Automatically creates the `roboshop` namespace if it does not already exist.
+
+### ⚡ Server Side Apply
+
+```yaml
+- ServerSideApply=true
+```
+
+Uses Kubernetes Server-Side Apply for resource management.
+
+## 🏗️ Deployment Architecture
+
+```text
+                    ┌──────────────────────┐
+                    │      GitHub 🐙        │
+                    │ frontend-argocd.git   │
+                    └──────────┬───────────┘
+                               │
+                               ▼
+                    ┌──────────────────────┐
+                    │       Argo CD 🔴     │
+                    │                      │
+                    │  GitOps Controller   │
+                    └──────────┬───────────┘
+                               │
+                         Helm Deployment
+                               │
+                               ▼
+                    ┌──────────────────────┐
+                    │   Kubernetes ☸️      │
+                    │                      │
+                    │ Namespace: roboshop  │
+                    │                      │
+                    │  ┌────────────────┐  │
+                    │  │ Frontend 🚀    │  │
+                    │  └────────────────┘  │
+                    └──────────────────────┘
+```
+
+## 🛠️ Technologies
+
+* 🐙 GitHub
+* 🔴 Argo CD
+* ☸️ Kubernetes
+* ⛵ Helm
+* 🐳 Docker
+* 🔄 GitOps
+* 🚀 CI/CD
+
+## 🎯 GitOps Benefits
+
+* ✅ Automated deployments
+* ✅ Continuous synchronization
+* ✅ Self-healing Kubernetes resources
+* ✅ Automatic pruning
+* ✅ Version-controlled infrastructure
+* ✅ Declarative Kubernetes configuration
+* ✅ Reproducible deployments
+
+---
+
+### 👨‍💻 RoboShop DevOps Project
+
+**Git Repository:** `frontend-argocd`
+
+**Deployment:** Argo CD + Helm + Kubernetes
+
+**Environment:** `roboshop`
