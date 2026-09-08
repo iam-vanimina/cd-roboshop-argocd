@@ -357,3 +357,209 @@ ipFamilyPolicy:
 Keep your Git manifest **declarative and minimal**; let Kubernetes generate runtime-specific values.
 
 --------------------------------------------------------------------------------------------------------------------------
+
+
+## ⚙️ Frontend NGINX Configuration
+
+The RoboShop frontend uses an NGINX `ConfigMap` to configure:
+
+* 🌐 Static frontend content
+* 🖼️ Image handling and fallback
+* 🔀 API reverse proxy
+* 📦 Backend service routing
+* 🗜️ Gzip compression
+* 📝 Access and error logging
+* 🚀 Port `8080`
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: frontend
+  namespace: roboshop
+
+  annotations:
+    argocd.argoproj.io/tracking-id: frontend:/ConfigMap:roboshop/frontend
+
+data:
+  nginx.conf: |
+    user www-data;
+    worker_processes 4;
+    pid /var/run/nginx.pid;
+
+    events {
+      worker_connections 768;
+    }
+
+    http {
+      sendfile on;
+      tcp_nopush on;
+      tcp_nodelay on;
+
+      keepalive_timeout 65;
+      types_hash_max_size 2048;
+
+      large_client_header_buffers 6 32k;
+      client_max_body_size 100m;
+
+      include /etc/nginx/mime.types;
+      default_type application/octet-stream;
+
+      access_log /var/log/nginx/access.log;
+      error_log /var/log/nginx/error.log warn;
+
+      gzip on;
+      gzip_disable "msie6";
+
+      include /etc/nginx/conf.d/*.conf;
+      include /etc/nginx/sites-enabled/*;
+
+      server {
+        listen 8080;
+        server_name localhost;
+
+        proxy_http_version 1.1;
+
+        location / {
+          root /usr/share/nginx/html;
+          index index.html index.htm;
+          ssi on;
+        }
+
+        location /images/ {
+          expires 5s;
+          root /usr/share/nginx/html;
+          try_files $uri /images/placeholder.png;
+        }
+
+        error_page 500 502 503 504 /50x.html;
+
+        location = /50x.html {
+          root /usr/share/nginx/html;
+        }
+
+        # Catalogue Service
+        location /api/catalogue/ {
+          proxy_pass http://catalogue:8080/;
+        }
+
+        # Cart Service
+        location /api/cart/ {
+          proxy_pass http://cart:8080/;
+        }
+
+        # User Service
+        location /api/user/ {
+          proxy_pass http://user:8080/;
+        }
+
+        # Shipping Service
+        location /api/shipping/ {
+          proxy_pass http://shipping:8080/;
+        }
+
+        # Payment Service
+        location /api/payment/ {
+          proxy_pass http://payment:8080/;
+        }
+
+        # Dispatch Service
+        location /api/dispatch/ {
+          proxy_pass http://dispatch:8080/;
+        }
+      }
+    }
+```
+
+### 🔀 NGINX API Routing
+
+The frontend NGINX acts as a **reverse proxy** between the browser and RoboShop backend microservices.
+
+```text
+                         ☸️ Kubernetes
+                              │
+                       ┌──────▼──────┐
+                       │   Frontend  │
+                       │    NGINX    │
+                       │   :8080     │
+                       └──────┬──────┘
+                              │
+          ┌───────────────────┼───────────────────┐
+          │                   │                   │
+          ▼                   ▼                   ▼
+    /api/catalogue/      /api/cart/          /api/user/
+          │                   │                   │
+          ▼                   ▼                   ▼
+      catalogue:8080       cart:8080         user:8080
+
+          ┌───────────────────┼───────────────────┐
+          │                   │                   │
+          ▼                   ▼                   ▼
+   /api/shipping/       /api/payment/       /api/dispatch/
+          │                   │                   │
+          ▼                   ▼                   ▼
+     shipping:8080       payment:8080       dispatch:8080
+```
+
+### 🌐 Request Flow
+
+```text
+👤 Browser
+   │
+   │ HTTP Request
+   ▼
+🚀 Frontend Service
+   │
+   ▼
+🔀 NGINX :8080
+   │
+   ├── /api/catalogue/ ──► 📦 catalogue:8080
+   ├── /api/cart/      ──► 🛒 cart:8080
+   ├── /api/user/      ──► 👤 user:8080
+   ├── /api/shipping/  ──► 🚚 shipping:8080
+   ├── /api/payment/   ──► 💳 payment:8080
+   └── /api/dispatch/  ──► 📦 dispatch:8080
+```
+
+### 📋 Configuration Summary
+
+| Feature             | Configuration     |
+| ------------------- | ----------------- |
+| 📦 Resource         | `ConfigMap`       |
+| 🏷️ Name            | `frontend`        |
+| 📁 Namespace        | `roboshop`        |
+| 🌐 NGINX Port       | `8080`            |
+| ⚡ Worker Processes  | `4`               |
+| 🔀 Reverse Proxy    | Enabled           |
+| 🗜️ Gzip            | Enabled           |
+| 📏 Max Request Size | `100m`            |
+| 🖼️ Image Fallback  | `placeholder.png` |
+| 🔴 Argo CD Managed  | Yes               |
+
+### 🔴 Argo CD Integration
+
+The ConfigMap is managed by Argo CD using the tracking annotation:
+
+```yaml
+annotations:
+  argocd.argoproj.io/tracking-id: frontend:/ConfigMap:roboshop/frontend
+```
+
+This allows Argo CD to associate the Kubernetes ConfigMap with the `frontend` Argo CD Application.
+
+### ⚠️ GitOps Best Practice
+
+Do **not** copy these fields from `kubectl get configmap frontend -o yaml` into your Git repository:
+
+```yaml
+creationTimestamp:
+resourceVersion:
+uid:
+```
+
+These are Kubernetes-generated runtime metadata.
+
+Keep the Git manifest declarative and let Kubernetes generate runtime metadata automatically.
+---------------------------------------------------------------------------------------------------------------------------
+
