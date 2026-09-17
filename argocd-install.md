@@ -26,13 +26,15 @@ The --create-namespace flag will automatically build the namespace if it doesn't
 
 
 # bash
+```
+helm repo update
 
-`helm install argocd argo/argo-cd \`
-
- ` --namespace argocd \ `
- 
-  ` --create-namespace `
-
+helm upgrade --install argocd argo/argo-cd \
+  --namespace argocd \
+  --create-namespace \
+  --wait \
+  --timeout 10m
+```
 
 # Verify the Deployment
 It can take a couple of minutes for all the microservices to pull their images and initialize. You can monitor the deployment status by running
