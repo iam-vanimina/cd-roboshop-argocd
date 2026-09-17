@@ -61,9 +61,7 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 The default username is admin. The initial password is automatically generated and safely stored inside a Kubernetes secret. Decrypt it using the following command:
 
 ```
-kubectl -n argocd get secret argocd-initial-admin-secret \
-
-  -o jsonpath="{.data.password}" | base64 -d
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 ```
 
   Note: It is highly recommended to change this temporary password immediately after logging in for the first time.
