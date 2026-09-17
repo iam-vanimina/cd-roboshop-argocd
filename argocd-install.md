@@ -12,11 +12,15 @@ Here is the step-by-step installation guide:
 
 # Add the official Argo repository
 
-`helm repo add argo https://argoproj.github.io/argo-helm`
+```
+helm repo add argo https://argoproj.github.io/argo-helm
+```
 
 # Update your local chart registry
 
-`helm repo update`
+```
+helm repo update
+```
 
 <img width="439" height="205" alt="image" src="https://github.com/user-attachments/assets/6fc0217a-4d54-403b-8f14-9307a629c04e" />
 
@@ -39,7 +43,9 @@ helm upgrade --install argocd argo/argo-cd \
 # Verify the Deployment
 It can take a couple of minutes for all the microservices to pull their images and initialize. You can monitor the deployment status by running
   
-  `kubectl get pods -n argocd`
+  ```
+  kubectl get pods -n argocd
+```
 
   Ensure all pods (such as argocd-server, argocd-repo-server, and argocd-application-controller) show a status of Running
 
@@ -48,7 +54,9 @@ It can take a couple of minutes for all the microservices to pull their images a
 
   By default, the Argo CD API server is not exposed with a public IP address. For local development or quick testing, the easiest access method is via Port Forwarding
 
-`kubectl port-forward svc/argocd-server -n argocd 8080:443`
+```
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+```
 
 The default username is admin. The initial password is automatically generated and safely stored inside a Kubernetes secret. Decrypt it using the following command:
 
